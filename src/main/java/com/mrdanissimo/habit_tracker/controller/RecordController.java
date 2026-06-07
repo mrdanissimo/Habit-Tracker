@@ -4,7 +4,6 @@ import com.mrdanissimo.habit_tracker.dto.RecordResponse;
 import com.mrdanissimo.habit_tracker.service.RecordService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
