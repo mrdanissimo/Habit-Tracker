@@ -7,6 +7,7 @@ import com.mrdanissimo.habit_tracker.exception.HabitNotFoundException;
 import com.mrdanissimo.habit_tracker.repository.HabitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +18,7 @@ public class HabitService {
     private final HabitRepository habitRepository;
 
     // Создание новой привычки
+    @Transactional
     public HabitResponse create(HabitRequest request) {
         // Превращаем DTO в Entity
         Habit habit = new Habit();
@@ -33,34 +35,40 @@ public class HabitService {
     }
 
     // Получение привычки по ID, если нет, то выбрасывает ошибку
+    @Transactional(readOnly = true)
     public Habit getHabitEntity(Long id) {
         return habitRepository.findById(id).orElseThrow(() -> new HabitNotFoundException(id));
     }
 
     // Получение всех привычек
+    @Transactional(readOnly = true)
     public List<HabitResponse> getAll() {
         return habitRepository.findAll().stream().map(this::mapToResponse).toList();
     }
 
     // Проверка существования
+    @Transactional(readOnly = true)
     public boolean existsById(Long id) {
         return habitRepository.existsById(id);
     }
 
     // Поиск по id
+    @Transactional(readOnly = true)
     public HabitResponse getById(Long id) {
         Habit habit = getHabitEntity(id);
         return mapToResponse(habit);
     }
 
+    @Transactional
     public void delete(Long id) {
-        if (!habitRepository.existsById(id)) {
+        if (!existsById(id)) {
             throw new HabitNotFoundException(id);
         }
         habitRepository.deleteById(id);
     }
 
     // Обновление привычки
+    @Transactional
     public HabitResponse update(Long id, HabitRequest request) {
         Habit habit = getHabitEntity(id);
 

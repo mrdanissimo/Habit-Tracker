@@ -12,4 +12,6 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     List<Record> findAllByHabitId(Long habitId);
 
     boolean existsByHabitIdAndDate(Long habitId, LocalDate date);
+
+    int countByDate(LocalDate date);
 }

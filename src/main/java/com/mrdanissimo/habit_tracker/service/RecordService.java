@@ -6,6 +6,7 @@ import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -17,6 +18,7 @@ public class RecordService {
     private final HabitService habitService;
 
     // Отметка выполнения привычки за текущиц день
+    @Transactional
     public RecordResponse markCompleted(Long habitId) {
         // Проверка отметки привычки за день
         if (recordRepository.existsByHabitIdAndDate(habitId, LocalDate.now())) {
@@ -32,6 +34,7 @@ public class RecordService {
     }
 
     // Получение всех записей выполнения привычки
+    @Transactional(readOnly = true)
     public List<RecordResponse> getAllByHabitId(Long habitId) {
         habitService.getHabitEntity(habitId); // Проверяем существование привычки
         return recordRepository.findAllByHabitId(habitId).stream().map(this::mapToResponce).toList();
