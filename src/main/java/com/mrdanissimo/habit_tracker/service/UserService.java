@@ -4,6 +4,7 @@ import com.mrdanissimo.habit_tracker.dto.AuthRequest;
 import com.mrdanissimo.habit_tracker.dto.AuthResponse;
 import com.mrdanissimo.habit_tracker.dto.UserResponse;
 import com.mrdanissimo.habit_tracker.entity.User;
+import com.mrdanissimo.habit_tracker.mapper.UserMapper;
 import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +17,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final UserMapper userMapper;
 
     // Регистрация
     public UserResponse register(AuthRequest request) {
@@ -29,7 +31,7 @@ public class UserService {
         user.setEmail(request.getEmail());
 
         userRepository.save(user);
-        return new UserResponse(user.getUsername());
+        return userMapper.toResponse(user);
     }
 
     // Логин

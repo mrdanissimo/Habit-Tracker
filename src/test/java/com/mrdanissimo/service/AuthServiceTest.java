@@ -1,4 +1,4 @@
-package com.mrdanissimo.authIntegration;
+package com.mrdanissimo.service;
 
 import com.mrdanissimo.habit_tracker.dto.*;
 import com.mrdanissimo.habit_tracker.entity.User;
@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
         classes = com.mrdanissimo.habit_tracker.HabitTrackerApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class AuthIntegrationTest {
+public class AuthServiceTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -87,7 +87,7 @@ public class AuthIntegrationTest {
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
                 "/api/auth/login", badLoginRequest, AuthResponse.class);
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 
     @Test

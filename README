@@ -1,0 +1,79 @@
+Backend-сервис на Spring Boot, позволяющий пользователям регистрироваться, создавать привычки, отмечать их выполнение и отслеживать детальную статистику и серии (streaks). Проект построен с использованием чистой архитектуры, полностью покрыт тестами и защищен авторизацией на базе JWT.
+- Технологический стек
+•	Фреймворк: Spring Boot, Spring MVC
+•	База данных: PostgreSQL (основная)
+•	Миграции: Liquibase
+•	Безопасность: Spring Security, JWT, BCrypt
+•	Документация: Swagger / OpenAPI
+•	Тестирование: JUnit 5, Mockito, MockMvc
+•	Инфраструктура: Maven, Docker
+- Запуск проекта через Docker
+Для работы приложения необходима база данных PostgreSQL. Самый простой способ запустить её — использовать Docker.
+1. Запуск базы данных PostgreSQL
+Выполните команду в терминале для создания и запуска контейнера:
+docker run --name habit-postgres \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_DB=habit_tracker \
+  -e POSTGRES_USER=postgres \
+  -p 5432:5432 \
+  -d postgres:15
+
+- Настройка переменных окружения
+Перед запуском приложения убедитесь, что вы задали секретный ключ для подписи JWT-токенов в переменных окружения вашего терминала или в настройках запуска IDE:
+export JWT_SECRET=your-super-secure-hidden-secret-key-minimum-256-bits-long
+
+- Запуск приложения
+Соберите и запустите сервис с помощью Maven wrapper:
+./mvnw spring-boot:run
+
+После успешного запуска Swagger UI будет доступен по адресу: http://localhost:8080/swagger-ui/index.html.
+
+- Пример работы с авторизацией
+Доступ к управлению привычками и статистике разрешен только авторизованным пользователям. Данные полностью изолированы (каждый пользователь видит только свои привычки).
+Шаг 1. Регистрация нового пользователя
+Запрос: POST /api/auth/register
+{
+  "username": "alice",
+  "email": "alice@example.com",
+  "password": "my_secure_password"
+}
+
+Ответ: 201 Created
+Шаг 2. Аутентификация (Логин)
+Запрос: POST /api/auth/login
+{
+  "username": "alice",
+  "password": "my_secure_password"
+}
+
+Ответ: 200 OK
+{
+  "username": "alice",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+Шаг 3. Выполнение защищенных запросов
+Полученный token необходимо передавать в каждом последующем запросе в HTTP-заголовке Authorization в формате Bearer <токен>.
+Пример заголовка:
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+- Список эндпоинтов REST API
+Аутентификация (Auth API)
+•	POST /api/auth/register — Регистрация нового аккаунта.
+•	POST /api/auth/login — Логин и получение JWT-токена.
+Управление привычками (Habit API)
+•	POST /api/habits — Создать новую привычку (требует валидный DTO).
+•	GET /api/habits — Получить список всех привычек текущего пользователя.
+•	GET /api/habits/{id} — Получить детальную информацию о привычке по ID.
+•	PUT /api/habits/{id} — Обновить параметры привычки.
+•	DELETE /api/habits/{id} — Удалить привычку.
+Отметки о выполнении (Record API)
+•	POST /api/habits/{id}/records — Отметить выполнение привычки за сегодня.
+•	GET /api/habits/{id}/records — Получить историю всех выполнений конкретной привычки.
+Статистика (Stats API)
+•	GET /api/habits/{id}/stats — Общая статистика по конкретной привычке (текущая серия, лучшая серия, процент выполнения).
+•	GET /api/stats/daily — Сводка выполнения всех привычек пользователя на сегодняшний день.
+•	GET /api/stats/week — Прогресс и количество выполненных привычек за последние 7 дней.
+- Тестирование
+Для запуска полного набора тестов (включая Unit-тесты сервисов на Mockito и интеграционные тесты контроллеров через MockMvc) выполните команду:
+./mvnw test

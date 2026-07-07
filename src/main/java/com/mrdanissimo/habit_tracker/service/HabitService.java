@@ -5,6 +5,7 @@ import com.mrdanissimo.habit_tracker.dto.HabitResponse;
 import com.mrdanissimo.habit_tracker.entity.Habit;
 import com.mrdanissimo.habit_tracker.entity.User;
 import com.mrdanissimo.habit_tracker.exception.HabitNotFoundException;
+import com.mrdanissimo.habit_tracker.mapper.HabitMapper;
 import com.mrdanissimo.habit_tracker.repository.HabitRepository;
 import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 public class HabitService {
     private final HabitRepository habitRepository;
     private final UserRepository userRepository;
+    private final HabitMapper habitMapper;
 
 
     // Создание новой привычки
@@ -28,19 +30,13 @@ public class HabitService {
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Превращаем DTO в Entity
-        Habit habit = new Habit();
-        habit.setName(request.getName());
-        habit.setDescription(request.getDescription());
-        habit.setTarget(request.getTarget());
-        habit.setCreatedAt(LocalDateTime.now());
-
-        // Привязка
+        // Используем маппер для создания Entity
+        Habit habit = habitMapper.toEntity(request);
+        habit.setCreatedAt(LocalDateTime.now()); // Добавляем техническое поле даты создания
         habit.setUser(currentUser);
 
-        // Сохраняем в БД
         Habit saved = habitRepository.save(habit);
-        return mapToResponse(saved);
+        return habitMapper.toResponse(saved); // Используем маппер для ответа
     }
 
     // Получение привычки по ID, если нет, то выбрасывает ошибку
@@ -53,9 +49,8 @@ public class HabitService {
     @Transactional(readOnly = true)
     public List<HabitResponse> getAllMyHabits() {
         Long userId = getCurrentUserId(); // Узнаем ID того, кто делает запрос
-
-        // Запрашиваем из репозитория только привычки этого пользователя
-        return habitRepository.findAllByUserId(userId).stream().map(this::mapToResponse).toList();
+        return habitRepository.findAllByUserId(userId).stream()
+                .map(habitMapper::toResponse).toList();
     }
 
     // Проверка существования
@@ -68,7 +63,7 @@ public class HabitService {
     @Transactional(readOnly = true)
     public HabitResponse getById(Long id) {
         Habit habit = getHabitEntity(id);
-        return mapToResponse(habit);
+        return habitMapper.toResponse(habit);
     }
 
     @Transactional
@@ -99,22 +94,13 @@ public class HabitService {
         habit.setTarget(request.getTarget());
 
         Habit updatedHabit = habitRepository.save(habit);
-        return mapToResponse(updatedHabit);
+        return habitMapper.toResponse(updatedHabit);
     }
 
     private Long getCurrentUserId() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
                 .orElseThrow().getId();
-    }
-
-    private HabitResponse mapToResponse(Habit habit) {
-        HabitResponse res = new HabitResponse();
-        res.setId(habit.getId());
-        res.setName(habit.getName());
-        res.setDescription(habit.getDescription());
-        res.setTarget(habit.getTarget());
-        return res;
     }
 }
 

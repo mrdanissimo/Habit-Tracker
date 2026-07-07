@@ -1,5 +1,6 @@
-package com.mrdanissimo.habit_tracker;
+package com.mrdanissimo.service;
 
+import com.mrdanissimo.habit_tracker.HabitTrackerApplication;
 import com.mrdanissimo.habit_tracker.dto.HabitRequest;
 import com.mrdanissimo.habit_tracker.dto.HabitResponse;
 import com.mrdanissimo.habit_tracker.entity.User;
@@ -12,13 +13,15 @@ import com.mrdanissimo.habit_tracker.service.HabitService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
 @WithMockUser(username = "alice")
-class HabitTrackerApplicationTests {
+@ContextConfiguration(classes = HabitTrackerApplication.class)
+class HabitServiceTests {
 
     @Autowired
     private HabitService habitService;

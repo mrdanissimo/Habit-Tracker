@@ -12,9 +12,19 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     // Привычки нет
-    @ExceptionHandler(HabitNotFoundException.class)
-    public ResponseEntity<String> handleNotFound(HabitNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleBadCredentials(RuntimeException ex) {
+        // Если в сообщении речь идет о неверном пароле или логине
+        if (ex.getMessage().contains("логин") || ex.getMessage().contains("пароль")) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED) // Честный 401 статус
+                    .body(Map.of("error", ex.getMessage()));
+        }
+
+        // Для всех остальных RuntimeException отдаем 500
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Внутренняя ошибка сервера"));
     }
     // Обработка ошибок dto
     @ExceptionHandler(MethodArgumentNotValidException.class)
