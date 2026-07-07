@@ -1,9 +1,12 @@
-package com.mrdanissimo.habit_tracker.service;
+package com.mrdanissimo.service;
 
 import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.dto.StatsResponse;
 import com.mrdanissimo.habit_tracker.entity.Habit;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
+import com.mrdanissimo.habit_tracker.repository.UserRepository;
+import com.mrdanissimo.habit_tracker.service.HabitService;
+import com.mrdanissimo.habit_tracker.service.StatsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -19,13 +22,16 @@ import static org.mockito.Mockito.when;
 public class StatsServiceTest {
     private RecordRepository recordRepository;
     private HabitService habitService;
+    private UserRepository userRepository;
     private StatsService statsService;
 
     @BeforeEach
     void setUp() {
         recordRepository = Mockito.mock(RecordRepository.class);
         habitService = Mockito.mock(HabitService.class);
-        statsService = new StatsService(recordRepository, habitService);
+        userRepository = Mockito.mock(UserRepository.class);
+
+        statsService = new StatsService(recordRepository, habitService, userRepository);
     }
 
     @Test

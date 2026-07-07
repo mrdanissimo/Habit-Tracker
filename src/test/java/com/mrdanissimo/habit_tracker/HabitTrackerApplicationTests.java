@@ -2,7 +2,12 @@ package com.mrdanissimo.habit_tracker;
 
 import com.mrdanissimo.habit_tracker.dto.HabitRequest;
 import com.mrdanissimo.habit_tracker.dto.HabitResponse;
+import com.mrdanissimo.habit_tracker.entity.User;
 import com.mrdanissimo.habit_tracker.exception.HabitNotFoundException;
+import com.mrdanissimo.habit_tracker.repository.HabitRepository;
+import com.mrdanissimo.habit_tracker.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.test.context.support.WithMockUser;
 import com.mrdanissimo.habit_tracker.service.HabitService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +15,32 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+
 @SpringBootTest
+@WithMockUser(username = "alice")
 class HabitTrackerApplicationTests {
 
     @Autowired
     private HabitService habitService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private HabitRepository habitRepository;
+
+    @BeforeEach
+    void setUp() {
+        habitRepository.deleteAll();
+        userRepository.deleteAll();
+
+        // Создаем и сохраняем alice, чтобы метод сервиса мог её найти
+        User testUser = new User();
+        testUser.setUsername("alice");
+        testUser.setPassword("password_not_important_here");
+        testUser.setEmail("alice@example.com");
+        userRepository.save(testUser);
+    }
 
 	@Test
     void create_shouldSaveAndReturnResponse() {

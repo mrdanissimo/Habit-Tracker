@@ -4,8 +4,10 @@ import com.mrdanissimo.habit_tracker.dto.*;
 import com.mrdanissimo.habit_tracker.entity.Habit;
 import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
+import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -15,9 +17,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class StatsService {
     private final RecordRepository recordRepository;
     private final HabitService habitService;
+    private final UserRepository userRepository;
 
     public StatsResponse getStats(Long habitId) {
         // Проверка существования привычки
@@ -79,7 +83,7 @@ public class StatsService {
     public DailyStatsResponse getDailyStats() {
         LocalDate today = LocalDate.now();
         // Берем все привычки через твой готовый сервис
-        List<HabitDailyStatus> statuses = habitService.getAll().stream()
+        List<HabitDailyStatus> statuses = habitService.getAllMyHabits().stream()
                 .map(h -> new HabitDailyStatus(
                         h.getId(),
                         h.getName(),
@@ -95,7 +99,7 @@ public class StatsService {
     // Прогресс за 7 дней
     public WeeklyStatsResponse getWeeklyStats() {
         List<DailyProgress> weekProgress = new java.util.ArrayList<>();
-        int totalHabits = habitService.getAll().size(); // Общее количество привычек
+        int totalHabits = habitService.getAllMyHabits().size(); // Общее количество привычек
 
         // Идем от 6 дней назад до сегодня
         for (int i = 6; i >= 0; i--) {

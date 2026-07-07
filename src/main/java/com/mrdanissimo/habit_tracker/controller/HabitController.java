@@ -30,7 +30,7 @@ public class HabitController {
     // Возвращает список привычек
     @GetMapping
     public ResponseEntity<List<HabitResponse>> getAll() {
-        return ResponseEntity.ok( habitService.getAll());
+        return ResponseEntity.ok(habitService.getAllMyHabits());
     }
 
     // Получает привычку по ID
@@ -47,7 +47,7 @@ public class HabitController {
 
     // Удаление привычки
     @DeleteMapping("/{id}")
-    public ResponseEntity<HabitResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         habitService.delete(id);
         return ResponseEntity.noContent().build();
     }

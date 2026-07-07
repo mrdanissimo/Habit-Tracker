@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/changes/001-create-habits-table.yaml
   - include:
       file: db/changelog/changes/002-create-records-table.yaml
+  - include:
+      file: db/changelog/changes/003-create-users-table.yaml

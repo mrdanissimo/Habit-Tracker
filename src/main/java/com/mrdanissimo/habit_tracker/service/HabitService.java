@@ -3,9 +3,12 @@ package com.mrdanissimo.habit_tracker.service;
 import com.mrdanissimo.habit_tracker.dto.HabitRequest;
 import com.mrdanissimo.habit_tracker.dto.HabitResponse;
 import com.mrdanissimo.habit_tracker.entity.Habit;
+import com.mrdanissimo.habit_tracker.entity.User;
 import com.mrdanissimo.habit_tracker.exception.HabitNotFoundException;
 import com.mrdanissimo.habit_tracker.repository.HabitRepository;
+import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +19,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HabitService {
     private final HabitRepository habitRepository;
+    private final UserRepository userRepository;
+
 
     // Создание новой привычки
-    @Transactional
     public HabitResponse create(HabitRequest request) {
+        Long userId = getCurrentUserId(); // Узнаем ID текущего пользователя
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
         // Превращаем DTO в Entity
         Habit habit = new Habit();
         habit.setName(request.getName());
@@ -27,11 +35,12 @@ public class HabitService {
         habit.setTarget(request.getTarget());
         habit.setCreatedAt(LocalDateTime.now());
 
-        // Сохраняем в БД
-        Habit savedHabit = habitRepository.save(habit);
+        // Привязка
+        habit.setUser(currentUser);
 
-        // Превращаем Entity обратно в DTO и отдаем контроллеру
-        return mapToResponse(savedHabit);
+        // Сохраняем в БД
+        Habit saved = habitRepository.save(habit);
+        return mapToResponse(saved);
     }
 
     // Получение привычки по ID, если нет, то выбрасывает ошибку
@@ -42,8 +51,11 @@ public class HabitService {
 
     // Получение всех привычек
     @Transactional(readOnly = true)
-    public List<HabitResponse> getAll() {
-        return habitRepository.findAll().stream().map(this::mapToResponse).toList();
+    public List<HabitResponse> getAllMyHabits() {
+        Long userId = getCurrentUserId(); // Узнаем ID того, кто делает запрос
+
+        // Запрашиваем из репозитория только привычки этого пользователя
+        return habitRepository.findAllByUserId(userId).stream().map(this::mapToResponse).toList();
     }
 
     // Проверка существования
@@ -60,11 +72,21 @@ public class HabitService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        if (!existsById(id)) {
-            throw new HabitNotFoundException(id);
+    public void delete(Long habitId) {
+        // Узнаем, кто пытается удалить
+        Long currentUserId = getCurrentUserId();
+
+        // Достаем привычку из базы
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new RuntimeException("Привычка не найдена"));
+
+        // Проверка совпадения пользователя
+        if (!habit.getUser().getId().equals(currentUserId)) {
+            throw new RuntimeException("Доступ запрещен! Это не ваша привычка");
         }
-        habitRepository.deleteById(id);
+
+        // Если ID совпали, то удаляем
+        habitRepository.delete(habit);
     }
 
     // Обновление привычки
@@ -78,6 +100,12 @@ public class HabitService {
 
         Habit updatedHabit = habitRepository.save(habit);
         return mapToResponse(updatedHabit);
+    }
+
+    private Long getCurrentUserId() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow().getId();
     }
 
     private HabitResponse mapToResponse(Habit habit) {
