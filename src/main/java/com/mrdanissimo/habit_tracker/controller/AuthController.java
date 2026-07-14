@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Пользователь успешно зарегистрирован"),
             @ApiResponse(responseCode = "400", description = "Пользователь с таким именем уже существует или невалидные данные")
     })
-    public ResponseEntity<UserResponse> register(@RequestBody AuthRequest request) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody AuthRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(request));
     }
 
@@ -40,7 +41,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Успешный вход, токен сгенерирован"),
             @ApiResponse(responseCode = "400", description = "Неверный логин или пароль")
     })
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         return ResponseEntity.ok(userService.login(request));
     }
 }

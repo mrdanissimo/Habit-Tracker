@@ -38,5 +38,6 @@ databaseChangeLog:
                   name: user_id
                   type: BIGINT
                   constraints:
+                    nullable: false
                     foreignKeyName: fk_habits_user
                     references: users(id)

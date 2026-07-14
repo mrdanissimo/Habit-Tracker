@@ -1,34 +1,47 @@
 package com.mrdanissimo.habit_tracker.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
-@Data // аннотация для создания геттеров и сеттеров
 @Entity
 @Table(name = "habits")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Habit {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // база сама генерирует Id
-    private Long id; // уникальный номер
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(nullable = false)
-    private String name; // название привычки
+    private String name;
+    private String description;
+    private Integer target;
 
-    private String description; // описание привычки
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(nullable = false)
-    private int target; // цель привычки
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt; // время создания
-
-    @OneToMany(mappedBy = "habit", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Record> record = new ArrayList<>(); // список записей, связанных с привычкой
-
+    // Связь с пользователем
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "habit", fetch = FetchType.LAZY)
+    private List<Record> records;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Habit)) return false;
+        Habit habit = (Habit) o;
+        return id != null && id.equals(habit.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

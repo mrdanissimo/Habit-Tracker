@@ -94,8 +94,7 @@ public class AuthServiceTest {
     void testGetHabits_withoutToken_isProtected() {
         ResponseEntity<Void> response = restTemplate.getForEntity("/api/habits", Void.class);
 
-        assertTrue(response.getStatusCode() == HttpStatus.UNAUTHORIZED
-                || response.getStatusCode() == HttpStatus.FORBIDDEN);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 
     @Test

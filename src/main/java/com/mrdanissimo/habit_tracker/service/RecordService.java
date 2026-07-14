@@ -6,6 +6,7 @@ import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.mapper.RecordMapper;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +20,20 @@ public class RecordService {
     private final HabitService habitService;
     private final RecordMapper recordMapper;
 
-    // Отметка выполнения привычки за текущиц день
+    // Отметка выполнения привычки за текущий день
     @Transactional
     public RecordResponse markCompleted(Long habitId) {
-        // Проверка отметки привычки за день
+        Habit habit = habitService.getHabitEntity(habitId);
+
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!Objects.equals(habit.getUser().getUsername(), currentUsername)) {
+            throw new RuntimeException("Доступ запрещен! Вы не можете отмечать чужие привычки.");
+        }
+
         if (recordRepository.existsByHabitIdAndDate(habitId, LocalDate.now())) {
             throw new RuntimeException("Привычка уже отмечена за сегодня.");
         }
-        Habit habit = habitService.getHabitEntity(habitId);
+
         Record record = new Record();
         record.setHabit(habit);
         record.setDate(LocalDate.now());
@@ -38,7 +45,13 @@ public class RecordService {
     // Получение всех записей выполнения привычки
     @Transactional(readOnly = true)
     public List<RecordResponse> getAllByHabitId(Long habitId) {
-        habitService.getHabitEntity(habitId); // Проверяем существование привычки
+        Habit habit = habitService.getHabitEntity(habitId);
+
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!Objects.equals(habit.getUser().getUsername(), currentUsername)) {
+            throw new RuntimeException("Доступ запрещен! Вы не можете просматривать историю чужих привычек.");
+        }
+
         return recordRepository.findAllByHabitId(habitId).stream()
                 .map(recordMapper::toResponse).toList();
     }

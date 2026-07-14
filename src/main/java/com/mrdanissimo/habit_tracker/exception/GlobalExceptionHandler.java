@@ -33,4 +33,20 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+
+    // Обработка 404 ошибки
+    @ExceptionHandler(HabitNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleHabitNotFound(HabitNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND) // Возвращаем 404
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    // Обработка 403 ошибки
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN) // Возвращаем 403
+                .body(Map.of("error", ex.getMessage()));
+    }
 }

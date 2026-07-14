@@ -4,6 +4,7 @@ import com.mrdanissimo.habit_tracker.dto.HabitRequest;
 import com.mrdanissimo.habit_tracker.dto.HabitResponse;
 import com.mrdanissimo.habit_tracker.entity.Habit;
 import com.mrdanissimo.habit_tracker.entity.User;
+import com.mrdanissimo.habit_tracker.exception.AccessDeniedException;
 import com.mrdanissimo.habit_tracker.exception.HabitNotFoundException;
 import com.mrdanissimo.habit_tracker.mapper.HabitMapper;
 import com.mrdanissimo.habit_tracker.repository.HabitRepository;
@@ -26,8 +27,8 @@ public class HabitService {
 
     // Создание новой привычки
     public HabitResponse create(HabitRequest request) {
-        Long userId = getCurrentUserId(); // Узнаем ID текущего пользователя
-        User currentUser = userRepository.findById(userId)
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
         // Используем маппер для создания Entity
@@ -42,7 +43,14 @@ public class HabitService {
     // Получение привычки по ID, если нет, то выбрасывает ошибку
     @Transactional(readOnly = true)
     public Habit getHabitEntity(Long id) {
-        return habitRepository.findById(id).orElseThrow(() -> new HabitNotFoundException(id));
+        Habit habit = habitRepository.findById(id)
+                .orElseThrow(() -> new HabitNotFoundException(id));
+
+        // Проверяем, владеет ли текущий пользователь этой привычкой
+        if (!habit.getUser().getId().equals(getCurrentUserId())) {
+            throw new AccessDeniedException("Доступ запрещен: эта привычка вам не принадлежит");
+        }
+        return habit;
     }
 
     // Получение всех привычек
@@ -68,19 +76,7 @@ public class HabitService {
 
     @Transactional
     public void delete(Long habitId) {
-        // Узнаем, кто пытается удалить
-        Long currentUserId = getCurrentUserId();
-
-        // Достаем привычку из базы
-        Habit habit = habitRepository.findById(habitId)
-                .orElseThrow(() -> new RuntimeException("Привычка не найдена"));
-
-        // Проверка совпадения пользователя
-        if (!habit.getUser().getId().equals(currentUserId)) {
-            throw new RuntimeException("Доступ запрещен! Это не ваша привычка");
-        }
-
-        // Если ID совпали, то удаляем
+        Habit habit = getHabitEntity(habitId);
         habitRepository.delete(habit);
     }
 
@@ -93,8 +89,7 @@ public class HabitService {
         habit.setDescription(request.getDescription());
         habit.setTarget(request.getTarget());
 
-        Habit updatedHabit = habitRepository.save(habit);
-        return habitMapper.toResponse(updatedHabit);
+        return habitMapper.toResponse(habitRepository.save(habit));
     }
 
     private Long getCurrentUserId() {

@@ -6,6 +6,8 @@ import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
 import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,7 +84,6 @@ public class StatsService {
     // Сводка за сегодня
     public DailyStatsResponse getDailyStats() {
         LocalDate today = LocalDate.now();
-        // Берем все привычки через твой готовый сервис
         List<HabitDailyStatus> statuses = habitService.getAllMyHabits().stream()
                 .map(h -> new HabitDailyStatus(
                         h.getId(),
@@ -96,15 +97,28 @@ public class StatsService {
         return response;
     }
 
-    // Прогресс за 7 дней
+    // Вспомогательный метод для получения ID пользователя
+    private Long getCurrentUserId() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден")).getId();
+    }
+
+    // Обновленный метод прогресса за 7 дней
     public WeeklyStatsResponse getWeeklyStats() {
+        Long userId = getCurrentUserId(); // Получаем ID текущего пользователя
         List<DailyProgress> weekProgress = new java.util.ArrayList<>();
-        int totalHabits = habitService.getAllMyHabits().size(); // Общее количество привычек
+
+        // Считаем привычки именно текущего пользователя
+        int totalHabits = habitService.getAllMyHabits().size();
 
         // Идем от 6 дней назад до сегодня
         for (int i = 6; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
-            int completed = recordRepository.countByDate(date); // Наш новый метод из репозитория
+
+            // Используем новый метод, который фильтрует по userId
+            int completed = recordRepository.countByDateAndUserId(date, userId);
+
             weekProgress.add(new DailyProgress(date, completed, totalHabits));
         }
 
