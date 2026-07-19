@@ -6,7 +6,6 @@ import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.mapper.RecordMapper;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +24,6 @@ public class RecordService {
     public RecordResponse markCompleted(Long habitId) {
         Habit habit = habitService.getHabitEntity(habitId);
 
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (!Objects.equals(habit.getUser().getUsername(), currentUsername)) {
-            throw new RuntimeException("Доступ запрещен! Вы не можете отмечать чужие привычки.");
-        }
-
         if (recordRepository.existsByHabitIdAndDate(habitId, LocalDate.now())) {
             throw new RuntimeException("Привычка уже отмечена за сегодня.");
         }
@@ -45,14 +39,10 @@ public class RecordService {
     // Получение всех записей выполнения привычки
     @Transactional(readOnly = true)
     public List<RecordResponse> getAllByHabitId(Long habitId) {
-        Habit habit = habitService.getHabitEntity(habitId);
-
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (!Objects.equals(habit.getUser().getUsername(), currentUsername)) {
-            throw new RuntimeException("Доступ запрещен! Вы не можете просматривать историю чужих привычек.");
-        }
+        habitService.getHabitEntity(habitId);
 
         return recordRepository.findAllByHabitId(habitId).stream()
-                .map(recordMapper::toResponse).toList();
+                .map(recordMapper::toResponse)
+                .toList();
     }
 }

@@ -6,8 +6,6 @@ import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
 import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,11 +82,28 @@ public class StatsService {
     // Сводка за сегодня
     public DailyStatsResponse getDailyStats() {
         LocalDate today = LocalDate.now();
-        List<HabitDailyStatus> statuses = habitService.getAllMyHabits().stream()
+
+        List<HabitResponse> myHabits = habitService.getAllMyHabits();
+
+        if (myHabits.isEmpty()) {
+            DailyStatsResponse response = new DailyStatsResponse();
+            response.setDate(today);
+            response.setHabits(java.util.Collections.emptyList());
+            return response;
+        }
+
+        List<Long> habitIds = myHabits.stream()
+                .map(HabitResponse::getId)
+                .toList();
+
+        Set<Long> completedHabitIds = recordRepository.findCompletedHabitIdsByDate(habitIds, today);
+
+        List<HabitDailyStatus> statuses = myHabits.stream()
                 .map(h -> new HabitDailyStatus(
                         h.getId(),
                         h.getName(),
-                        recordRepository.existsByHabitIdAndDate(h.getId(), today)))
+                        completedHabitIds.contains(h.getId())
+                ))
                 .toList();
 
         DailyStatsResponse response = new DailyStatsResponse();
@@ -97,16 +112,9 @@ public class StatsService {
         return response;
     }
 
-    // Вспомогательный метод для получения ID пользователя
-    private Long getCurrentUserId() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден")).getId();
-    }
-
     // Обновленный метод прогресса за 7 дней
     public WeeklyStatsResponse getWeeklyStats() {
-        Long userId = getCurrentUserId(); // Получаем ID текущего пользователя
+        Long userId = habitService.getCurrentUserId();
         List<DailyProgress> weekProgress = new java.util.ArrayList<>();
 
         // Считаем привычки именно текущего пользователя

@@ -92,7 +92,7 @@ public class HabitService {
         return habitMapper.toResponse(habitRepository.save(habit));
     }
 
-    private Long getCurrentUserId() {
+    public Long getCurrentUserId() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
                 .orElseThrow().getId();

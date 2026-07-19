@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface RecordRepository extends JpaRepository<Record, Long> {
@@ -20,4 +21,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
 
     @Query("SELECT COUNT(r) FROM Record r JOIN r.habit h WHERE r.date = :date AND h.user.id = :userId")
     int countByDateAndUserId(@Param("date") LocalDate date, @Param("userId") Long userId);
+
+    @Query("SELECT r.habit.id FROM Record r WHERE r.habit.id IN :habitIds AND r.date = :date")
+    Set<Long> findCompletedHabitIdsByDate(@Param("habitIds") List<Long> habitIds, @Param("date") LocalDate date);
 }
