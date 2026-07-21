@@ -4,33 +4,41 @@ import com.mrdanissimo.habit_tracker.dto.AuthRequest;
 import com.mrdanissimo.habit_tracker.dto.AuthResponse;
 import com.mrdanissimo.habit_tracker.dto.UserResponse;
 import com.mrdanissimo.habit_tracker.entity.User;
+import com.mrdanissimo.habit_tracker.exception.DuplicateUserException;
+import com.mrdanissimo.habit_tracker.exception.InvalidCredentialsException;
+import com.mrdanissimo.habit_tracker.exception.UserNotFoundException;
 import com.mrdanissimo.habit_tracker.mapper.UserMapper;
 import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserMapper userMapper;
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return (UserDetails) userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден: " + username));
+    public User getCurrentUser() {
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+    }
+
+    public Long getCurrentUserId() {
+        return getCurrentUser().getId();
     }
 
     // Регистрация
     public UserResponse register(AuthRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Пользователь с таким именем уже существует");
+            throw new DuplicateUserException(request.getUsername());
         }
 
         User user = new User();
@@ -45,10 +53,10 @@ public class UserService implements UserDetailsService {
     // Логин
     public AuthResponse login(AuthRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Неверный логин или пароль"));
+                .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Неверный логин или пароль");
+            throw new InvalidCredentialsException();
         }
 
         String token = jwtService.generateToken(user.getUsername());

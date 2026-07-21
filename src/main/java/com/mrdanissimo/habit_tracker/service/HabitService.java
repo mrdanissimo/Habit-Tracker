@@ -8,9 +8,7 @@ import com.mrdanissimo.habit_tracker.exception.AccessDeniedException;
 import com.mrdanissimo.habit_tracker.exception.HabitNotFoundException;
 import com.mrdanissimo.habit_tracker.mapper.HabitMapper;
 import com.mrdanissimo.habit_tracker.repository.HabitRepository;
-import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +19,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HabitService {
     private final HabitRepository habitRepository;
-    private final UserRepository userRepository;
     private final HabitMapper habitMapper;
+    private final UserService userService;
 
 
     // Создание новой привычки
     public HabitResponse create(HabitRequest request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        User currentUser = userService.getCurrentUser();
 
         // Используем маппер для создания Entity
         Habit habit = habitMapper.toEntity(request);
@@ -47,7 +43,7 @@ public class HabitService {
                 .orElseThrow(() -> new HabitNotFoundException(id));
 
         // Проверяем, владеет ли текущий пользователь этой привычкой
-        if (!habit.getUser().getId().equals(getCurrentUserId())) {
+        if (!habit.getUser().getId().equals(userService.getCurrentUserId())) {
             throw new AccessDeniedException("Доступ запрещен: эта привычка вам не принадлежит");
         }
         return habit;
@@ -56,7 +52,7 @@ public class HabitService {
     // Получение всех привычек
     @Transactional(readOnly = true)
     public List<HabitResponse> getAllMyHabits() {
-        Long userId = getCurrentUserId(); // Узнаем ID того, кто делает запрос
+        Long userId = userService.getCurrentUserId(); // Узнаем ID того, кто делает запрос
         return habitRepository.findAllByUserId(userId).stream()
                 .map(habitMapper::toResponse).toList();
     }
@@ -90,12 +86,6 @@ public class HabitService {
         habit.setTarget(request.getTarget());
 
         return habitMapper.toResponse(habitRepository.save(habit));
-    }
-
-    public Long getCurrentUserId() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow().getId();
     }
 }
 

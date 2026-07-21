@@ -4,7 +4,6 @@ import com.mrdanissimo.habit_tracker.dto.*;
 import com.mrdanissimo.habit_tracker.entity.Habit;
 import com.mrdanissimo.habit_tracker.entity.Record;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
-import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 public class StatsService {
     private final RecordRepository recordRepository;
     private final HabitService habitService;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     public StatsResponse getStats(Long habitId) {
         // Проверка существования привычки
@@ -114,7 +113,7 @@ public class StatsService {
 
     // Обновленный метод прогресса за 7 дней
     public WeeklyStatsResponse getWeeklyStats() {
-        Long userId = habitService.getCurrentUserId();
+        Long userId = userService.getCurrentUserId();
         List<DailyProgress> weekProgress = new java.util.ArrayList<>();
 
         // Считаем привычки именно текущего пользователя

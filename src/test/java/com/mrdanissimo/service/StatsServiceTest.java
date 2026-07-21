@@ -7,6 +7,7 @@ import com.mrdanissimo.habit_tracker.repository.RecordRepository;
 import com.mrdanissimo.habit_tracker.repository.UserRepository;
 import com.mrdanissimo.habit_tracker.service.HabitService;
 import com.mrdanissimo.habit_tracker.service.StatsService;
+import com.mrdanissimo.habit_tracker.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -22,16 +23,16 @@ import static org.mockito.Mockito.when;
 public class StatsServiceTest {
     private RecordRepository recordRepository;
     private HabitService habitService;
-    private UserRepository userRepository;
+    private UserService userService;
     private StatsService statsService;
 
     @BeforeEach
     void setUp() {
         recordRepository = Mockito.mock(RecordRepository.class);
         habitService = Mockito.mock(HabitService.class);
-        userRepository = Mockito.mock(UserRepository.class);
+        userService = Mockito.mock(UserService.class);
 
-        statsService = new StatsService(recordRepository, habitService, userRepository);
+        statsService = new StatsService(recordRepository, habitService, userService);
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.mrdanissimo.habit_tracker.service;
 import com.mrdanissimo.habit_tracker.dto.RecordResponse;
 import com.mrdanissimo.habit_tracker.entity.Habit;
 import com.mrdanissimo.habit_tracker.entity.Record;
+import com.mrdanissimo.habit_tracker.exception.AlreadyCompletedException;
 import com.mrdanissimo.habit_tracker.mapper.RecordMapper;
 import com.mrdanissimo.habit_tracker.repository.RecordRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class RecordService {
         Habit habit = habitService.getHabitEntity(habitId);
 
         if (recordRepository.existsByHabitIdAndDate(habitId, LocalDate.now())) {
-            throw new RuntimeException("Привычка уже отмечена за сегодня.");
+            throw new AlreadyCompletedException();
         }
 
         Record record = new Record();
